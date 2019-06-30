@@ -1,13 +1,13 @@
 #include <iostream>
 
+#include <algorithm>
 #include <fstream>
-
 #include <limits>
 
 #include "Heap.h"
 
 struct Node {
-    uint32_t label;
+    uint32_t id;
     uint32_t dist;
 };
 bool operator==(const Node& lhs, const Node& rhs) {
@@ -22,12 +22,19 @@ bool operator>=(const Node& lhs, const Node& rhs) {
     return lhs.dist >= rhs.dist;
 }
 
-int main() {
+int main(int argc, char** argv) {
     uint32_t node_count;
 
-    std::ifstream fs("dj20.txt");
+    if (argc != 2) {
+        std::cout << "dijkstra <file_patth>" << std::endl;
+        std::exit(EXIT_SUCCESS);
+    }
+
+    std::string file_path = argv[1];
+
+    std::ifstream fs(file_path);
     if (!fs.is_open()) {
-        std::cerr << "bleh\n";
+        std::cerr << "Failed to open file: " << file_path;
         std::exit(EXIT_FAILURE);
     }
     fs >> node_count;
@@ -52,51 +59,59 @@ int main() {
         }
     }
 
-    for (uint32_t i = 0; i < node_count; ++i) {
-        for (uint32_t j = 0; j < node_count; ++j) {
-            uint32_t index = i * node_count + j;
-            std::cout << adj_matrix[index] << "\t";
-        }
-        std::cout << "\n";
-    }
-
     std::vector<Node> S;
     S.reserve(node_count);
 
     std::vector<Node> nodes;
-    for (uint32_t i = 1; i <= node_count; ++i)
+    for (uint32_t i = 0; i < node_count; ++i)
         nodes.push_back({i, std::numeric_limits<uint32_t>::max()});
-
     nodes[0].dist = 0;
 
+    std::vector<uint32_t> P(nodes.size(), std::numeric_limits<uint32_t>::max());
+
     Heap<Node, HeapType::Min> Q(nodes);
-
     while (!Q.is_empty()) {
-        for (auto& i : Q.get_array())
-            std::cout << "(Node: " << i.label << " Dist: " << i.dist << ");";
-        std::cout << "\n ";
-
         Node v = Q.extract();
-
         S.push_back(v);
 
         for (uint32_t i = 0; i < Q.get_size(); ++i) {
             Node u = Q.at(i);
 
-            uint32_t matrix_index = (v.label - 1) * node_count + (u.label - 1);
+            uint32_t matrix_index = v.id * node_count + u.id;
             uint32_t adj = adj_matrix[matrix_index];
 
             if ((adj) && (u.dist > v.dist + adj)) {
                 u.dist = v.dist + adj;
+                nodes[u.id].dist = u.dist;
+                P[u.id] = v.id;
                 Q.set(i, u);
             }
         }
     }
 
+    for (auto& u : S) {
+        std::cout << "{Node = " << u.id << ", Dist = " << u.dist << "} ";
+    }
     std::cout << "\n";
 
-    for (auto& i : S) {
-        std::cout << "(Node: " << i.label << " Dist: " << i.dist << "); ";
+    S.clear();
+    Node u = nodes.back();
+
+    if (P[u.id] < std::numeric_limits<uint32_t>::max()) {
+        while (true) {
+            S.push_back(u);
+            if (P[u.id] < std::numeric_limits<uint32_t>::max()) {
+                u = nodes[P[u.id]];
+            } else {
+                break;
+            }
+        }
+    }
+
+    while (!S.empty()) {
+        Node u = S.back();
+        S.pop_back();
+        std::cout << "{Node = " << u.id << ", Dist = " << u.dist << "} ";
     }
     std::cout << "\n";
 

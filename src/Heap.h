@@ -25,7 +25,7 @@ class Heap {
         if (index < size) {
             return array[index];
         } else {
-            std::cerr << "heap: out of bounds" << std::endl;
+            std::cerr << "Heap: out of bounds" << std::endl;
             std::exit(EXIT_FAILURE);
         }
     }
@@ -47,6 +47,9 @@ class Heap {
 
     void build();
 };
+
+template <typename V, typename K, HeapType H>
+using AssociativeHeap = Heap<std::pair<V, K>, H>;
 
 template <typename T, HeapType H>
 Heap<T, H>::Heap(const std::vector<T>& array_) : array(array_) {
@@ -98,7 +101,7 @@ T Heap<T, H>::extract() {
 template <typename T, HeapType H>
 void Heap<T, H>::set(uint32_t index, T v) {
     if (index >= size) {
-        std::cerr << "heap: out of bounds" << std::endl;
+        std::cerr << "Heap: out of bounds" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
