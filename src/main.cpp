@@ -59,6 +59,14 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::ofstream of("tst");
+    for (uint32_t i = 0; i < node_count; ++i) {
+        for (uint32_t j = 0; j < node_count; ++j) {
+            of << adj_matrix[i * node_count + j] << " ";
+        }
+        of << "\n";
+    }
+
     std::vector<Node> S;
     S.reserve(node_count);
 
