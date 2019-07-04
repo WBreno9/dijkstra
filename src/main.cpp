@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     uint32_t node_count;
 
     if (argc != 2) {
-        std::cout << "dijkstra <file_patth>" << std::endl;
+        std::cout << "dijkstra <file_path>" << std::endl;
         std::exit(EXIT_SUCCESS);
     }
 
