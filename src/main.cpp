@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 
     std::vector<uint32_t> P(nodes.size(), std::numeric_limits<uint32_t>::max());
 
-    Heap<Node, HeapType::Min> Q(nodes);
+    MinHeap<Node> Q(nodes);
     while (!Q.is_empty()) {
         Node v = Q.extract();
         S.push_back(v);
