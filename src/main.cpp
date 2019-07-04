@@ -97,14 +97,12 @@ int main(int argc, char** argv) {
     S.clear();
     Node u = nodes.back();
 
-    if (P[u.id] < std::numeric_limits<uint32_t>::max()) {
-        while (true) {
-            S.push_back(u);
-            if (P[u.id] < std::numeric_limits<uint32_t>::max()) {
-                u = nodes[P[u.id]];
-            } else {
-                break;
-            }
+    while (true) {
+        S.push_back(u);
+        if (P[u.id] < std::numeric_limits<uint32_t>::max()) {
+            u = nodes[P[u.id]];
+        } else {
+            break;
         }
     }
 
