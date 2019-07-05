@@ -13,20 +13,34 @@ enum class HeapType { Min, Max };
 template <typename T, HeapType H>
 class Heap {
    public:
-    Heap() = default;
-    Heap(const std::vector<T>& array_) : array(array_) {
-        size = array.size();
+    Heap(const std::vector<T>& array) {
+        nodes.reserve(array.size());
+        for (uint32_t i = 0; i < array.size(); ++i)
+            nodes.push_back({i, array[i]});
+
+        pos.resize(nodes.size());
+        for (uint32_t i = 0; i < nodes.size(); ++i) pos[i] = i;
+
+        size = nodes.size();
         build();
     }
     ~Heap() {}
 
-    T extract() {
-        T extracted = array[0];
-        array[0] = array[(size--) - 1];
-        heapify(0);
+    struct HeapNode {
+        uint32_t id;
+        T d;
+    };
 
-        return extracted;
+    T extract() {
+        HeapNode extracted = nodes[0];
+        nodes[0] = nodes[size - 1];
+        pos[0] = size - 1;
+        --size;
+
+        heapify(0);
+        return extracted.d;
     }
+
     void heapify(uint32_t index) {
         while (true) {
             uint32_t t = index;
@@ -34,73 +48,89 @@ class Heap {
             uint32_t r = right_child(t);
 
             if constexpr (H == HeapType::Min) {
-                if (l < size && (array[t] > array[l])) t = l;
-                if (r < size && (array[t] > array[r])) t = r;
+                if (l < size && (nodes[t].d > nodes[l].d)) t = l;
+                if (r < size && (nodes[t].d > nodes[r].d)) t = r;
             } else {
-                if (l < size && array[t] < array[l]) t = l;
-                if (r < size && array[t] < array[r]) t = r;
+                if (l < size && nodes[t].d < nodes[l].d) t = l;
+                if (r < size && nodes[t].d < nodes[r].d) t = r;
             }
 
             if (t != index) {
-                std::swap(array[index], array[t]);
+                pos[nodes[t].id] = index;
+                pos[nodes[index].id] = t;
+
+                std::swap(nodes[index], nodes[t]);
             } else {
                 break;
             }
         }
     }
+
+    /*
     void set(uint32_t index, T v) {
         if (index >= size) {
-            std::cerr << "Heap: out of bounds" << std::endl;
+            std::cerr << "Heap (set): out of bounds - " << index << std::endl;
             std::exit(EXIT_FAILURE);
         }
 
         if constexpr (H == HeapType::Min) {
-            if (v == array[index]) {
+            if (v == nodes[index]) {
                 return;
-            } else if (v < array[index]) {
-                array[index] = v;
-                while ((index != 0) && (array[index] < array[parent(index)])) {
-                    std::swap(array[index], array[parent(index)]);
+            } else if (v < nodes[index]) {
+                nodes[index] = v;
+                while ((index != 0) && (nodes[index] < nodes[parent(index)])) {
+                    uint32_t tmp = pos[index];
+                    uint32_t pp = parent(index);
+
+                    pos[index] = pp;
+                    pos[pos[pp]] = tmp;
+
+                    std::swap(nodes[index], nodes[parent(index)]);
+
+                    // std::swap(pos[index], pos[parent(index)]);
                     index = parent(index);
                 }
             } else {
-                array[index] = v;
+                nodes[index] = v;
                 heapify(index);
             }
         } else {
-            if (v == array[index]) {
+            if (v == nodes[index]) {
                 return;
-            } else if (v > array[index]) {
-                array[index] = v;
-                while ((index != 0) && (array[index] > array[parent(index)])) {
-                    std::swap(array[index], array[parent(index)]);
+            } else if (v > nodes[index]) {
+                nodes[index] = v;
+                while ((index != 0) && (nodes[index] > nodes[parent(index)])) {
+                    std::swap(nodes[index], nodes[parent(index)]);
+                    std::swap(pos[index], pos[parent(index)]);
                     index = parent(index);
                 }
             } else {
-                array[index] = v;
+                nodes[index] = v;
                 heapify(index);
             }
         }
-    }
+    }*/
 
     const T& at(uint32_t index) const {
         if (index < size) {
-            return array[index];
+            return nodes[index].d;
         } else {
-            std::cerr << "Heap: out of bounds" << std::endl;
+            std::cerr << "Heap (at): out of bounds" << std::endl;
             std::exit(EXIT_FAILURE);
         }
     }
 
-    std::vector<T> get_array() const {
-        return std::vector<T>(array.begin(), (array.begin() + size));
+    uint32_t get_pos(uint32_t index) const { return pos[index]; }
+
+    std::vector<T> get_nodes() const {
+        return std::vector<T>(nodes.begin(), (nodes.begin() + size));
     }
-    T top() const { return array[0]; }
     bool is_empty() const { return size == 0; }
     uint32_t get_size() const { return size; }
 
-   private:
-    std::vector<T> array;
+    // private:
+    std::vector<HeapNode> nodes;
+    std::vector<uint32_t> pos;
     uint32_t size;
 
     uint32_t parent(uint32_t index) const { return index / 2.0f; }
