@@ -3,24 +3,102 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
-
-#include "Heap.h"
+#include <vector>
 
 struct Node {
     uint32_t id;
     uint32_t dist;
 };
-bool operator==(const Node& lhs, const Node& rhs) {
-    return lhs.dist == rhs.dist;
-}
-bool operator<(const Node& lhs, const Node& rhs) { return lhs.dist < rhs.dist; }
-bool operator>(const Node& lhs, const Node& rhs) { return lhs.dist > rhs.dist; }
-bool operator<=(const Node& lhs, const Node& rhs) {
-    return lhs.dist <= rhs.dist;
-}
-bool operator>=(const Node& lhs, const Node& rhs) {
-    return lhs.dist >= rhs.dist;
-}
+
+class MinHeap {
+   public:
+    MinHeap() = default;
+    MinHeap(const std::vector<Node>& array_) : array(array_) {
+        uint32_t k = 0;
+        for (auto& n : array) n.id = k++;
+
+        pos.resize(array.size());
+        k = 0;
+        for (auto& p : pos) p = k++;
+
+        size = array.size();
+        build();
+    }
+    ~MinHeap() {}
+
+    Node extract() {
+        Node extracted = array[0];
+        array[0] = array[(size--) - 1];
+        pos[0] = size - 1;
+        heapify(0);
+
+        return extracted;
+    }
+    void heapify(uint32_t index) {
+        while (true) {
+            uint32_t t = index;
+            uint32_t l = left_child(t);
+            uint32_t r = right_child(t);
+
+            if (l < size && (array[t].dist > array[l].dist)) t = l;
+            if (r < size && (array[t].dist > array[r].dist)) t = r;
+
+            if (t != index) {
+                std::swap(array[index], array[t]);
+                pos[array[t].id] = index;
+                pos[array[index].id] = t;
+            } else {
+                break;
+            }
+        }
+    }
+    void set(Node v) {
+        uint32_t index = pos[v.id];
+
+        if ((index >= size) && (v.dist == array[index].dist)) {
+            return;
+        } else if (v.dist < array[index].dist) {
+            array[index] = v;
+            while ((index) && (array[index].dist < array[parent(index)].dist)) {
+                pos[array[index].id] = parent(index);
+                pos[array[parent(index)].id] = index;
+
+                std::swap(array[index], array[parent(index)]);
+                index = parent(index);
+            }
+        }
+    }
+
+    const Node& at(uint32_t index) const {
+        if (index < size) {
+            return array[index];
+        } else {
+            std::cerr << "Heap: out of bounds" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    std::vector<Node> get_array() const {
+        return std::vector<Node>(array.begin(), (array.begin() + size));
+    }
+    Node top() const { return array[0]; }
+    bool is_empty() const { return size == 0; }
+    uint32_t get_size() const { return size; }
+
+   private:
+    std::vector<uint32_t> pos;
+    std::vector<Node> array;
+    uint32_t size;
+
+    uint32_t parent(uint32_t index) const { return index / 2.0f; }
+    uint32_t left_child(uint32_t index) const { return 2 * index + 1; }
+    uint32_t right_child(uint32_t index) const { return 2 * index + 2; }
+
+    void build() {
+        uint32_t j = (size / 2.0f) - 1;
+        for (uint32_t i = j + 1; i != 0; --i) heapify(i - 1);
+    }
+};
 
 int main(int argc, char** argv) {
     uint32_t node_count;
@@ -69,32 +147,25 @@ int main(int argc, char** argv) {
 
     std::vector<uint32_t> P(nodes.size(), std::numeric_limits<uint32_t>::max());
 
-
-
-    MinHeap<Node> Q(nodes);
+    MinHeap Q(nodes);
     while (!Q.is_empty()) {
         Node v = Q.extract();
         S.push_back(v);
 
-        for (uint32_t i = 0; i < Q.get_size(); ++i) {
-            Node u = Q.at(i);
+        for (uint32_t i = 0; i < node_count; ++i) {
+            Node u = nodes[i];
 
-            uint32_t matrix_index = v.id * node_count + u.id;
+            uint32_t matrix_index = v.id * node_count + i;
             uint32_t adj = adj_matrix[matrix_index];
 
             if ((adj) && (u.dist > v.dist + adj)) {
                 u.dist = v.dist + adj;
                 nodes[u.id].dist = u.dist;
                 P[u.id] = v.id;
-                Q.set(i, u);
+                Q.set(u);
             }
         }
     }
-
-    for (auto& u : S) {
-        std::cout << "{Node = " << u.id << ", Dist = " << u.dist << "} ";
-    }
-    std::cout << "\n";
 
     S.clear();
     Node u = nodes.back();
