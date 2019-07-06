@@ -4,7 +4,6 @@ project(dijkstra)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCES
-	src/Heap.h
 	src/main.cpp
 	)
 

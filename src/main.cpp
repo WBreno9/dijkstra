@@ -44,48 +44,36 @@ class MinHeap {
             if (r < size && (array[t].dist > array[r].dist)) t = r;
 
             if (t != index) {
-                std::swap(array[index], array[t]);
                 pos[array[t].id] = index;
                 pos[array[index].id] = t;
+
+                std::swap(array[index], array[t]);
             } else {
                 break;
             }
         }
     }
-    void set(Node v) {
+    void decrease(Node& v, uint32_t new_dist) {
         uint32_t index = pos[v.id];
 
-        if ((index >= size) && (v.dist == array[index].dist)) {
-            return;
-        } else if (v.dist < array[index].dist) {
-            array[index] = v;
-            while ((index) && (array[index].dist < array[parent(index)].dist)) {
-                pos[array[index].id] = parent(index);
-                pos[array[parent(index)].id] = index;
+        v.dist = new_dist;
+        array[index] = v;
 
-                std::swap(array[index], array[parent(index)]);
-                index = parent(index);
-            }
-        }
-    }
+        while ((index) && (array[index].dist < array[parent(index)].dist)) {
+            pos[array[index].id] = parent(index);
+            pos[array[parent(index)].id] = index;
 
-    const Node& at(uint32_t index) const {
-        if (index < size) {
-            return array[index];
-        } else {
-            std::cerr << "Heap: out of bounds" << std::endl;
-            std::exit(EXIT_FAILURE);
+            std::swap(array[index], array[parent(index)]);
+            index = parent(index);
         }
     }
 
     std::vector<Node> get_array() const {
         return std::vector<Node>(array.begin(), (array.begin() + size));
     }
-    Node top() const { return array[0]; }
-    bool is_empty() const { return size == 0; }
-    uint32_t get_size() const { return size; }
 
-   private:
+    bool is_empty() const { return size == 0; }
+
     std::vector<uint32_t> pos;
     std::vector<Node> array;
     uint32_t size;
@@ -137,6 +125,24 @@ int main(int argc, char** argv) {
         }
     }
 
+    std::ofstream ofs("tst");
+
+    ofs << "\t";
+    for (uint32_t j = 0; j < node_count; ++j) ofs << j << "\t";
+    ofs << "\n";
+
+    // ofs << "\t";
+
+    for (uint32_t j = 0; j < node_count; ++j) {
+        ofs << j << "\t";
+        for (uint32_t i = 0; i < node_count; ++i) {
+            uint32_t matrix_index = j * node_count + i;
+            ofs << adj_matrix[matrix_index] << "\t";
+        }
+        ofs << "\n";
+    }
+    ofs.close();
+
     std::vector<Node> S;
     S.reserve(node_count);
 
@@ -153,19 +159,22 @@ int main(int argc, char** argv) {
         S.push_back(v);
 
         for (uint32_t i = 0; i < node_count; ++i) {
-            Node u = nodes[i];
+            Node& u = nodes[i];
 
             uint32_t matrix_index = v.id * node_count + i;
             uint32_t adj = adj_matrix[matrix_index];
 
-            if ((adj) && (u.dist > v.dist + adj)) {
-                u.dist = v.dist + adj;
-                nodes[u.id].dist = u.dist;
+            if (u.dist > v.dist + adj) {
+                uint32_t new_dist = v.dist + adj;
                 P[u.id] = v.id;
-                Q.set(u);
+                Q.decrease(u, new_dist);
             }
         }
     }
+
+    for (auto& u : S)
+        std::cout << "{Node = " << u.id << ", Dist = " << u.dist << "} ";
+    std::cout << "\n";
 
     S.clear();
     Node u = nodes.back();
