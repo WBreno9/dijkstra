@@ -4,12 +4,18 @@
 #include <fstream>
 #include <limits>
 #include <list>
+#include <vector>
+
+struct GraphNode {
+    uint32_t id;
+    uint32_t dist;
+    uint32_t p;
+    std::vector<uint32_t> adjs;
+};
 
 struct HeapNode {
     uint32_t id;
     uint32_t dist;
-    std::vector<uint32_t> adjs;  // not optimal, has to move a vector
-    uint32_t p;
 };
 
 class MinHeap {
@@ -64,7 +70,6 @@ class MinHeap {
             return;
         } else if (dist < nodes[index].dist) {
             nodes[index].dist = dist;
-            nodes[index].p = n.p;
 
             while (index && (nodes[index].dist < nodes[parent(index)].dist)) {
                 pos[nodes[index].id] = parent(index);
@@ -95,8 +100,9 @@ class MinHeap {
     uint32_t get_size() const { return size; }
 
     // private:
-    std::vector<HeapNode> nodes;
     std::vector<uint32_t> pos;
+    std::vector<HeapNode> nodes;
+
     uint32_t size;
 
     uint32_t parent(uint32_t index) const { return index / 2.0f; }
@@ -165,10 +171,7 @@ int main(int argc, char** argv) {
     }
     ofs.close();
 
-    std::vector<HeapNode> S;
-    S.reserve(node_count);
-
-    std::vector<HeapNode> nodes;
+    std::vector<GraphNode> graph_nodes;
     for (uint32_t i = 0; i < node_count; ++i) {
         std::vector<uint32_t> adj;
         adj.reserve(node_count);
@@ -178,24 +181,51 @@ int main(int argc, char** argv) {
             if (adj_matrix[matrix_index]) adj.push_back(j);
         }
 
-        nodes.push_back({i, std::numeric_limits<uint32_t>::max(), adj,
-                         std::numeric_limits<uint32_t>::max()});
+        GraphNode gnode;
+        gnode.id = i;
+        gnode.dist = std::numeric_limits<uint32_t>::max();
+        gnode.p = std::numeric_limits<uint32_t>::max();
+        gnode.adjs = adj;
+
+        graph_nodes.push_back(gnode);
     }
-    nodes[0].dist = 0;
+    graph_nodes[0].dist = 0;
+
+    // std::vector<HeapNode> heap_nodes;
+    // for (uint32_t i = 0; i < node_count; ++i) {
+    //    std::vector<uint32_t> adj;
+    //    adj.reserve(node_count);
+    //
+    //    for (uint32_t j = 0; j < node_count; ++j) {
+    //        uint32_t matrix_index = i * node_count + j;
+    //        if (adj_matrix[matrix_index]) adj.push_back(j);
+    //    }
+    //
+    //    nodes.push_back({i, std::numeric_limits<uint32_t>::max(), adj,
+    //                     std::numeric_limits<uint32_t>::max()});
+    //}
+    // nodes[0].dist = 0;
+
+    /*
+
+
+    std::vector<HeapNode> S;
+    S.reserve(node_count);
+
 
     MinHeap Q(nodes);
     while (!Q.is_empty()) {
+        // for (auto& u : Q.get_nodes())
+        //     std::cout << "{Node = " << u.id << ", Dist = " << u.dist
+        //               << ", P = " << u.p << "} ";
+        // std::cout << "\n";
+
         HeapNode v = Q.extract();
         S.push_back(v);
 
-        // std::cout << "Q: ";
-        // for (auto& u : Q.get_nodes())
-        //    std::cout << "{Node = " << u.id << ", Dist = " << u.dist << "} ";
-        // std::cout << "\n";
-
         for (uint32_t i = 0; i < v.adjs.size(); ++i) {
             uint32_t p = v.adjs.at(i);
-            HeapNode u = nodes[p];
+            HeapNode& u = nodes[p];
 
             uint32_t matrix_index = v.id * node_count + u.id;
             uint32_t adj_dist = adj_matrix[matrix_index];
@@ -207,10 +237,10 @@ int main(int argc, char** argv) {
         }
     }
 
-    for (auto& u : S)
-        std::cout << "{Node = " << u.id << ", Dist = " << u.dist
-                  << ", P = " << u.p << "} ";
-    std::cout << "\n";
+    // for (auto& u : S)
+    //     std::cout << "{Node = " << u.id << ", Dist = " << u.dist
+    //               << ", P = " << u.p << "} ";
+    // std::cout << "\n";
 
     /*
     S.clear();
