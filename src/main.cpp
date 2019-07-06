@@ -191,7 +191,8 @@ int main(int argc, char** argv) {
     }
     graph_nodes[0].dist = 0;
 
-    // std::vector<HeapNode> heap_nodes;
+    std::vector<HeapNode> heap_nodes;
+
     // for (uint32_t i = 0; i < node_count; ++i) {
     //    std::vector<uint32_t> adj;
     //    adj.reserve(node_count);
